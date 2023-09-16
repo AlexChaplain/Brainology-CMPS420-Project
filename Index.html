@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EEG Data </title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100vh; /* Set the body height to the full viewport height */
+            display: flex;
+            flex-direction: column; /* Stack containers vertically */
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            text-align: center;
+            padding: 10px;
+
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            width: 100%;
+        }
+
+        .pane {
+            flex: 1;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+        }
+
+        .file-upload {
+            margin-bottom: 10px;
+        }
+
+        .analysis-results {
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    
+    <header>
+        <h1>EEG Data Analysis</h1>
+    </header>
+
+    <div>
+        <input type="file" accept=".csv, .txt" class="file-upload" id="eeg-upload">
+       <br>
+        <button id="analyze-button">Analyze</button>
+       </br> 
+    </div>
+    <div class="container">
+
+        <div class="pane" id="first-pane">
+            <h2>First Pane</h2>
+            <!-- Add content for the second container here -->
+        </div>
+
+        <div class="pane" id="second-pane">
+            <h2>Second Pane</h2>
+            <!-- Add content for the second container here -->
+        </div>
+
+    </div>
+
+    <div class="pane" id="third-pane">
+        <h2>Third Pane</h2>
+        <!-- Add content for the third container here -->
+    </div>
+
+    <script>
+        const eegUpload = document.getElementById('eeg-upload');
+        const analyzeButton = document.getElementById('analyze-button');
+        const eegVisualization = document.getElementById('eeg-visualization');
+        const analysisResults = document.getElementById('analysis-results');
+
+        analyzeButton.addEventListener('click', () => {
+            // Handle EEG data analysis here
+            const uploadedData = eegUpload.files[0];
+
+            // For illustration, display the uploaded file name
+            if (uploadedData) {
+                analysisResults.textContent = `Uploaded EEG data: ${uploadedData.name}`;
+            } else {
+                analysisResults.textContent = 'No EEG data uploaded.';
+            }
+        });
+    </script>
+</body>
+</html>
