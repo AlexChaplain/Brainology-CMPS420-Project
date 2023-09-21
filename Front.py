@@ -10,26 +10,26 @@ from mne.datasets import eegbci
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 
 # function to display EEG data in the first pane
-def display_eeg_data(file_path):
-    global first_pane_label
-    global first_pane_figure
-    first_pane_label.config(text="EEG Data")
+## def display_eeg_data(file_path):
+   ## global first_pane_label
+   ## global first_pane_figure
+   ## first_pane_label.config(text="EEG Data")
 
-    try:
+## try:
 # Load  EEG data from the selected .edf file
-        raw = read_raw_edf(file_path, preload=True)
+      ##  raw = read_raw_edf(file_path, preload=True)
 
 # Plot the EEG data in the first pane with scaling
-        fig = raw.plot(scalings={"eeg": 1e-5}, show=False)  # Adjust scaling as needed
-        first_pane_figure = fig
+       ## fig = raw.plot(scalings={"eeg": 1e-5}, show=False)  # Adjust scaling as needed
+       ## first_pane_figure = fig
 
 # Update the first pane with the EEG plot
-        canvas = FigureCanvasTkAgg(fig, master=first_pane)
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
+       ## canvas = FigureCanvasTkAgg(fig, master=first_pane)
+       ## canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
 
-    except Exception as e:
-        print(f"Error loading or plotting EEG data: {e}")
-        
+   ## except Exception as e:
+       ## print(f"Error loading or plotting EEG data: {e}")
+      
 # main window
 root = tk.Tk()
 root.title("EEG Data Analysis")
