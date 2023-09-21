@@ -8,7 +8,7 @@ from mne.channels import make_standard_montage
 from mne.io import concatenate_raws, read_raw_edf
 from mne.datasets import eegbci
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
- 
+
 # function to display EEG data in the first pane
 def display_eeg_data(file_path):
     global first_pane_label
@@ -19,7 +19,7 @@ def display_eeg_data(file_path):
 # Load  EEG data from the selected .edf file
         raw = read_raw_edf(file_path, preload=True)
 
- # Plot the EEG data in the first pane with scaling
+# Plot the EEG data in the first pane with scaling
         fig = raw.plot(scalings={"eeg": 1e-5}, show=False)  # Adjust scaling as needed
         first_pane_figure = fig
 
@@ -68,18 +68,21 @@ container.pack(fill=tk.BOTH, expand=True)
 pane_border_color = "#ccc"  
 pane_border_width = 1  
 
+# first pane
 first_pane = tk.Frame(container, bg=style["pane"]["background-color"], borderwidth=pane_border_width, relief="solid", highlightbackground=pane_border_color, highlightthickness=pane_border_width)
 first_pane.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 first_pane_label = tk.Label(first_pane, text="First Pane", font=("Arial", 14))
 first_pane_label.pack()
 first_pane.pack_propagate(False)
 
+# second pane
 second_pane = tk.Frame(container, bg=style["pane"]["background-color"], borderwidth=pane_border_width, relief="solid", highlightbackground=pane_border_color, highlightthickness=pane_border_width)
 second_pane.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
 second_pane_label = tk.Label(second_pane, text="Second Pane", font=("Arial", 14))
 second_pane_label.pack()
 second_pane.pack_propagate(False)
 
+# third pane
 third_pane = tk.Frame(root, bg=style["pane"]["background-color"], borderwidth=pane_border_width, relief="solid", highlightbackground=pane_border_color, highlightthickness=pane_border_width)
 third_pane.pack(fill=tk.BOTH, expand=True)
 third_pane_label = tk.Label(third_pane, text="Third Pane", font=("Arial", 14))
