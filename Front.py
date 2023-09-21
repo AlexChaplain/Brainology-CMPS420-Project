@@ -8,7 +8,7 @@ from mne.channels import make_standard_montage
 from mne.io import concatenate_raws, read_raw_edf
 from mne.datasets import eegbci
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-
+ 
 # function to display EEG data in the first pane
 def display_eeg_data(file_path):
     global first_pane_label
