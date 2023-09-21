@@ -91,7 +91,7 @@ third_pane.pack_propagate(False)
 
 # File dialog function
 def browse_file():
-    file_path = filedialog.askopenfilename(filetypes=[("CSV Files", "*.csv"), ("Text Files", "*.txt"), ("EDF Files", "*.edf")])
+    file_path = filedialog.askopenfilename(filetypes=[("EDF Files", "*.edf")])
     if file_path:
         analysis_results_label.config(text=f"Uploaded EEG data: {file_path}")
 # Handle the .edf file
