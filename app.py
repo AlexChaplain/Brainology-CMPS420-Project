@@ -121,7 +121,7 @@ def main():
   st.markdown("Session and Channel and Frequency Phases")
   # creating the sidebar with all it's glorious options
   st.sidebar.subheader("Session Selection")
-  session_list = ['E01', 'E02', 'E03', 'E04']
+  session_list = ['E01']
   session_name = st.sidebar.selectbox("Select the Session", session_list)
   show_topo = st.sidebar.checkbox("Show Topo Map")
 
