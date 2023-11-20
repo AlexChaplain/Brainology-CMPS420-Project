@@ -116,14 +116,14 @@ def load_raw_data(session_name):
   return signals, signal_headers, header
 
 def main():
-  st.title("EEG SIGNAL DATA VISUALIZATION")
-  st.subheader("An interactive web app to visualise EEG Data")
-  st.markdown("Session and Channel and Frequency Phases")
+  st.title("BRAINOLOGY EEG SIGNAL DATA VISUALIZATION")
+  st.subheader("An interactive graphical user interfaces to visualise EEG Data")
+  st.markdown("Sessions, Channels, and Frequency Phases")
   # creating the sidebar with all it's glorious options
-  st.sidebar.subheader("Session Selection")
+  st.sidebar.subheader("File Selection")
   session_list = ['E01']
-  session_name = st.sidebar.selectbox("Select the Session", session_list)
-  show_topo = st.sidebar.checkbox("Show Topo Map")
+  session_name = st.sidebar.selectbox("Select the File", session_list)
+  show_topo = st.sidebar.checkbox("Show Topographic Map")
 
   # fetching the input data from the files and calculating parameters for charts
   signals_raw, signals_head, _ = load_raw_data(session_name)
@@ -169,13 +169,13 @@ def main():
     highcut = 100
   sampled_channel = butter_bandpass_filter(signals.iloc[id].to_numpy(), lowcut, highcut, 256, order=6)
   if session_name:
-    st.write("Showing the first five channels of the session ", session_name)
+    st.write("Showing the first five channels of the selected file", session_name)
     st.dataframe(signals.head())
   if show_topo:
     st.write("Showing the topographical data of the brain as per Emotiv 14 channel headset")
     st.pyplot(fig)
   if selected_channel:
-    st.write("The data of channel ",selected_channel," in the band -  ",selected_frequency)
+    st.write("The data of the selected channel ",selected_channel," in the band frequency -  ",selected_frequency)
     st.line_chart(sampled_channel)
   # st.markdown('The data for this project has been used from - [EEG dataset of Fusion relaxation and concentration moods”, Mendeley Data, V1, doi: 10.17632/8c26dn6c7w.1](https://data.mendeley.com/datasets/8c26dn6c7w/1#__sid=js0)')
  

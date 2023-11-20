@@ -47,7 +47,7 @@ style = {
 # header
 header = tk.Frame(root, bg=style["header"]["background-color"])
 header.pack()
-header_label = tk.Label(header, text="Brainology EEG Data Analysis", font=("Arial", 16), bg=style["header"]["background-color"], fg=style["header"]["color"])
+header_label = tk.Label(header, text="BRAINOLOGY EEG Data Analysis", font=("Arial", 16), bg=style["header"]["background-color"], fg=style["header"]["color"])
 header_label.pack()
 
 # file upload/analyze button
