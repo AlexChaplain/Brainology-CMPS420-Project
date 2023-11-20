@@ -116,7 +116,7 @@ def load_raw_data(session_name):
   return signals, signal_headers, header
 
 def main():
-  st.title("BRAINOLOGY EEG SIGNAL DATA VISUALIZATION")
+  st.title("<p style='text-align: center;'>BRAINOLOGY EEG SIGNAL DATA VISUALIZATION</p>", unsafe_allow_html=True)
   st.subheader("An interactive graphical user interfaces to visualise EEG Data")
   st.markdown("Sessions, Channels, and Frequency Phases")
   # creating the sidebar with all it's glorious options
