@@ -7,10 +7,12 @@ from matplotlib import patches
 from scipy.signal import butter, lfilter
 import matplotlib.pyplot as plt
 import streamlit as st
+import warnings
 
 # a function to fetch the power spectral density of the signals
 # change the sampling frequency (fs) and range on the basis of headset
 
+@st.cache_resource
 def get_psds(data, fs=256, f_range=[0.5, 30]):
     '''
     Calculate signal power using Welch method.
@@ -27,8 +29,8 @@ def get_psds(data, fs=256, f_range=[0.5, 30]):
         powers = np.append(powers, sum(psd[idx]))
         psds.append(psd[idx])
     return powers, psds
-# function to plot the topographical map of the brain according to Emotiv 14 channel headset
 
+# function to plot the topographical map of the brain according to Emotiv 14 channel headset
 def plot_topomap(data, ax, fig, draw_cbar=True):
     '''
     Plot topographic plot of EEG data. This specialy design for Emotiv 14 electrode data. 
@@ -96,6 +98,7 @@ def plot_topomap(data, ax, fig, draw_cbar=True):
     
 
 # functions to create a butterworth filter
+@st.cache_resource
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
     low = lowcut / nyq
@@ -103,21 +106,21 @@ def butter_bandpass(lowcut, highcut, fs, order=5):
     b, a = butter(order, [low, high], btype='band')
     return b, a
 
-
+@st.cache_resource
 def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     b, a = butter_bandpass(lowcut, highcut, fs, order=order)
     y = lfilter(b, a, data)
     return y
 #function to load the raw data from the edf file selected
-@st.cache
+@st.cache_resource
 def load_raw_data(session_name):
   file_loc = 'data/S001/S001'+ session_name+'.edf'
   signals, signal_headers, header = highlevel.read_edf(file_loc)
   return signals, signal_headers, header
 
 def main():
-  st.title("<p style='text-align: center;'>BRAINOLOGY EEG SIGNAL DATA VISUALIZATION</p>", unsafe_allow_html=True)
-  st.subheader("An interactive graphical user interfaces to visualise EEG Data")
+  st.title("EEG SIGNAL DATA VISUALIZATION")
+  st.subheader("An interactive GUI to visualise EEG Data")
   st.markdown("Sessions, Channels, and Frequency Phases")
   # creating the sidebar with all it's glorious options
   st.sidebar.subheader("File Selection")
@@ -133,7 +136,7 @@ def main():
   st.sidebar.subheader("Channel Selection")
   channel_names_list = headers['label']
   selected_channel = st.sidebar.selectbox("Select the Channel", channel_names_list)
-  freq_bands = ['alpha', 'beta', 'delta', 'theta', 'gamma', 'none']
+  freq_bands = ['Alpha', 'Beta', 'Delta', 'Theta', 'Gamma', 'None']
   st.sidebar.subheader("Frequency Band Selection")
   selected_frequency = st.sidebar.selectbox("Select the Frequency Band", freq_bands)
   #show_psd = st.sidebar.checkbox("Show Power Spectral Density")
@@ -149,27 +152,27 @@ def main():
 
   # code which I could have refactored a lot
 
-  if selected_frequency == 'alpha':
+  if selected_frequency == 'Alpha':
     lowcut = 8
     highcut = 12
-  elif selected_frequency == 'beta':
+  elif selected_frequency == 'Beta':
     lowcut = 13
     highcut = 30
-  elif selected_frequency == 'delta':
+  elif selected_frequency == 'Delta':
     lowcut = 1
     highcut = 4
-  elif selected_frequency == 'theta':
+  elif selected_frequency == 'Theta':
     lowcut = 4
     highcut = 8
-  elif selected_frequency == 'gamma':
+  elif selected_frequency == 'Gamma':
     lowcut = 30
     highcut = 100
-  elif selected_frequency == 'none':
+  elif selected_frequency == 'None':
     lowcut = 1
     highcut = 100
   sampled_channel = butter_bandpass_filter(signals.iloc[id].to_numpy(), lowcut, highcut, 256, order=6)
   if session_name:
-    st.write("Showing the first five channels of the selected file", session_name)
+    st.write("Showing the first five channels of the selected file -", session_name)
     st.dataframe(signals.head())
   if show_topo:
     st.write("Showing the topographical data of the brain as per Emotiv 14 channel headset")
@@ -182,4 +185,6 @@ def main():
 
 
 if __name__ == '__main__':
-	main()
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning)
+        main()
