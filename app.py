@@ -112,26 +112,75 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=5):
     y = lfilter(b, a, data)
     return y
 #function to load the raw data from the edf file selected
+
 @st.cache_resource
 def load_raw_data(session_name):
   file_loc = 'data/S001/S001'+ session_name+'.edf'
   signals, signal_headers, header = highlevel.read_edf(file_loc)
   return signals, signal_headers, header
 
+# ... (previous code remains unchanged) ...
+
+# Function to plot PSD for all frequency bands
+def plot_all_frequencies(signals, headers, selected_channel):
+    fig, ax = plt.subplots(figsize=(10, 8))
+    colors = ['red', 'blue', 'green', 'orange', 'purple']  # Add more colors if needed
+    for idx, freq_band in enumerate(['Alpha', 'Beta', 'Delta', 'Theta', 'Gamma']):
+        if freq_band == 'None':
+            continue
+        id = headers.index[headers['label'] == selected_channel].tolist()[0]
+        if freq_band == 'Alpha':
+            lowcut = 8
+            highcut = 13
+        elif freq_band == 'Beta':
+            lowcut = 13
+            highcut = 30
+        elif freq_band == 'Delta':
+            lowcut = 1
+            highcut = 4
+        elif freq_band == 'Theta':
+            lowcut = 4
+            highcut = 8
+        elif freq_band == 'Gamma':
+            lowcut = 30
+            highcut = 100
+
+        freq, psd = signal.welch(
+            butter_bandpass_filter(signals.iloc[id].to_numpy(), lowcut, highcut, 256, order=6),
+            fs=256
+        )
+        ax.semilogy(freq, psd, label=freq_band, color=colors[idx])
+    ax.legend()
+    ax.set_title("Power Spectral Density for Each Frequency Band")
+    ax.set_xlabel('Frequency (Hz)')
+    ax.set_ylabel('PSD')
+    st.pyplot(fig)
+
 def main():
   st.title("EEG SIGNAL DATA VISUALIZATION")
   st.subheader("An interactive GUI to visualise EEG Data")
   st.markdown("Sessions, Channels, and Frequency Phases")
+
   # creating the sidebar with all it's glorious options
   st.sidebar.subheader("File Selection")
-  session_list = ['E01']
+  session_list = ['E01','E02','E03','E04']
   session_name = st.sidebar.selectbox("Select the File", session_list)
   show_topo = st.sidebar.checkbox("Show Topographic Map")
+  show_all_freq = st.sidebar.checkbox("Show All Frequencies")
 
-  # fetching the input data from the files and calculating parameters for charts
+  # Fetching 'signals' variable here
   signals_raw, signals_head, _ = load_raw_data(session_name)
   signals = pd.DataFrame(signals_raw)
   headers = pd.DataFrame(signals_head)
+
+  # Generate a unique key for the selectbox
+  selectbox_key = f"channel_select_{session_name}"
+  channel_names_list = headers['label'].unique()
+
+  selected_channel = st.sidebar.selectbox("Select the PSD channel for each frequency band ", channel_names_list, key=selectbox_key)  # Pass the unique key here
+
+  if show_all_freq:
+      plot_all_frequencies(signals, headers, selected_channel)  # Pass 'selected_channel' to the function
 
   st.sidebar.subheader("Channel Selection")
   channel_names_list = headers['label']
@@ -151,7 +200,6 @@ def main():
   #f = plt.psd(signals.iloc[id], 256, 1 / 0.001)
 
   # code which I could have refactored a lot
-
   if selected_frequency == 'Alpha':
     lowcut = 8
     highcut = 12
