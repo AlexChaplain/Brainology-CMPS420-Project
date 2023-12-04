@@ -8,6 +8,12 @@ from scipy.signal import butter, lfilter
 import matplotlib.pyplot as plt
 import streamlit as st
 import warnings
+import mne
+from mne.preprocessing import ICA
+from mne import Epochs, pick_types, events_from_annotations
+from mne.channels import make_standard_montage
+from mne.io import concatenate_raws, read_raw_edf
+from mne.datasets import eegbci
 
 # a function to fetch the power spectral density of the signals
 # change the sampling frequency (fs) and range on the basis of headset
@@ -119,7 +125,41 @@ def load_raw_data(session_name):
   signals, signal_headers, header = highlevel.read_edf(file_loc)
   return signals, signal_headers, header
 
-# ... (previous code remains unchanged) ...
+# Function to apply ICA for artifact removal
+@st.cache_resource
+def apply_ica(data, n_components=14, random_state=97):
+    # Create info object for RawArray
+    ch_names = [f'EEG {i}' for i in range(data.shape[0])]
+    ch_types = ['eeg'] * data.shape[0]
+    info = mne.create_info(ch_names=ch_names, sfreq=256, ch_types=ch_types)
+
+    # Convert NumPy array to RawArray instance
+    raw = mne.io.RawArray(data, info)
+
+    # Apply ICA
+    ica = ICA(n_components=n_components, random_state=random_state)
+    ica.fit(raw)
+
+    # Get ICA components and apply them manually
+    ica_components = ica.get_components()
+    cleaned_data = np.dot(data.T, ica_components.T).T
+
+    return cleaned_data
+
+    # Apply ICA to Raw data
+    ica = mne.preprocessing.ICA(n_components=20, random_state=97, max_iter=800)
+    ica.fit(raw)
+    ica.exclude = [15]  # ICA components
+    ica.plot_properties(raw, picks=ica.exclude)
+
+    # Find the covariance of channels of raw data and plot
+    noise_cov = mne.compute_raw_covariance(raw, method="shrunk")
+    fig_noise_cov = mne.viz.plot_cov(noise_cov, raw.info, show_svd=False)
+
+    #Plot ICA components
+    mne.viz.plot_ica_sources(ica, raw)
+    ica.plot_components()
+    ica.plot_overlay(raw)
 
 # Function to plot PSD for all frequency bands
 def plot_all_frequencies(signals, headers, selected_channel):
@@ -157,78 +197,84 @@ def plot_all_frequencies(signals, headers, selected_channel):
     st.pyplot(fig)
 
 def main():
-  st.title("EEG SIGNAL DATA VISUALIZATION")
-  st.subheader("An interactive GUI to visualise EEG Data")
-  st.markdown("Sessions, Channels, and Frequency Phases")
+    st.title("EEG SIGNAL DATA VISUALIZATION")
+    st.subheader("An interactive GUI to visualize EEG Data")
+    st.markdown("Sessions, Channels, and Frequency Phases")
 
-  # creating the sidebar with all it's glorious options
-  st.sidebar.subheader("File Selection")
-  session_list = ['E01','E02','E03','E04']
-  session_name = st.sidebar.selectbox("Select the File", session_list)
-  show_topo = st.sidebar.checkbox("Show Topographic Map")
-  show_all_freq = st.sidebar.checkbox("Show All Frequencies")
+    # creating the sidebar with all it's glorious options
+    st.sidebar.subheader("File Selection")
+    session_list = ['E01','E02','E03','E04']
+    session_name = st.sidebar.selectbox("Select the File", session_list)
+    show_topo = st.sidebar.checkbox("Show Topographic Map")
+    show_all_freq = st.sidebar.checkbox("Show All Frequencies")
 
-  # Fetching 'signals' variable here
-  signals_raw, signals_head, _ = load_raw_data(session_name)
-  signals = pd.DataFrame(signals_raw)
-  headers = pd.DataFrame(signals_head)
+    # Fetching 'signals' variable here
+    signals_raw, signals_head, _ = load_raw_data(session_name)
+    signals = pd.DataFrame(signals_raw)
+    headers = pd.DataFrame(signals_head)
 
-  # Generate a unique key for the selectbox
-  selectbox_key = f"channel_select_{session_name}"
-  channel_names_list = headers['label'].unique()
+    # Generate a unique key for the selectbox
+    selectbox_key = f"channel_select_{session_name}"
+    channel_names_list = headers['label'].unique()
 
-  selected_channel = st.sidebar.selectbox("Select the PSD channel for each frequency band ", channel_names_list, key=selectbox_key)  # Pass the unique key here
+    selected_channel = st.sidebar.selectbox("Select the PSD channel for each frequency band ", channel_names_list, key=selectbox_key)
 
-  if show_all_freq:
-      plot_all_frequencies(signals, headers, selected_channel)  # Pass 'selected_channel' to the function
+    apply_ica_checkbox = st.sidebar.checkbox("Apply ICA for Artifact Removal")
 
-  st.sidebar.subheader("Channel Selection")
-  channel_names_list = headers['label']
-  selected_channel = st.sidebar.selectbox("Select the Channel", channel_names_list)
-  freq_bands = ['Alpha', 'Beta', 'Delta', 'Theta', 'Gamma', 'None']
-  st.sidebar.subheader("Frequency Band Selection")
-  selected_frequency = st.sidebar.selectbox("Select the Frequency Band", freq_bands)
-  #show_psd = st.sidebar.checkbox("Show Power Spectral Density")
+    if apply_ica_checkbox:
+        signals_raw = apply_ica(signals_raw)
+    if show_all_freq:
+      plot_all_frequencies(signals, headers, selected_channel)  
+      # Pass 'selected_channel' to the function
 
-  pwrs, _ = get_psds(signals_raw)
-  fig, ax = plt.subplots(figsize=(10,8))
-  plot_topomap(pwrs, ax, fig)
+    st.sidebar.subheader("Channel Selection")
+    channel_names_list = headers['label']
+    selected_channel = st.sidebar.selectbox("Select the Channel", channel_names_list)
+    freq_bands = ['Alpha', 'Beta', 'Delta', 'Theta', 'Gamma', 'None']
+    st.sidebar.subheader("Frequency Band Selection")
+    selected_frequency = st.sidebar.selectbox("Select the Frequency Band", freq_bands)
+    #show_psd = st.sidebar.checkbox("Show Power Spectral Density")
 
-   
+    pwrs, _ = get_psds(signals_raw)
+    fig, ax = plt.subplots(figsize=(10,8))
+    plot_topomap(pwrs, ax, fig)
 
-  id =  headers.index[headers['label'] == selected_channel].tolist()[0]
-  #f = plt.psd(signals.iloc[id], 256, 1 / 0.001)
+   # Apply ICA to the raw data
+    cleaned_signals_raw = apply_ica(signals_raw)
+
+    id =  headers.index[headers['label'] == selected_channel].tolist()[0]
+   #f = plt.psd(signals.iloc[id], 256, 1 / 0.001)
 
   # code which I could have refactored a lot
-  if selected_frequency == 'Alpha':
-    lowcut = 8
-    highcut = 12
-  elif selected_frequency == 'Beta':
-    lowcut = 13
-    highcut = 30
-  elif selected_frequency == 'Delta':
-    lowcut = 1
-    highcut = 4
-  elif selected_frequency == 'Theta':
-    lowcut = 4
-    highcut = 8
-  elif selected_frequency == 'Gamma':
-    lowcut = 30
-    highcut = 100
-  elif selected_frequency == 'None':
-    lowcut = 1
-    highcut = 100
-  sampled_channel = butter_bandpass_filter(signals.iloc[id].to_numpy(), lowcut, highcut, 256, order=6)
-  if session_name:
-    st.write("Showing the first five channels of the selected file -", session_name)
-    st.dataframe(signals.head())
-  if show_topo:
-    st.write("Showing the topographical data of the brain as per Emotiv 14 channel headset")
-    st.pyplot(fig)
-  if selected_channel:
-    st.write("The data of the selected channel ",selected_channel," in the band frequency -  ",selected_frequency)
-    st.line_chart(sampled_channel)
-  # st.markdown('The data for this project has been used from - [EEG dataset of Fusion relaxation and concentration moods”, Mendeley Data, V1, doi: 10.17632/8c26dn6c7w.1](https://data.mendeley.com/datasets/8c26dn6c7w/1#__sid=js0)')
+    if selected_frequency == 'Alpha':
+      lowcut = 8
+      highcut = 12
+    elif selected_frequency == 'Beta':
+      lowcut = 13
+      highcut = 30
+    elif selected_frequency == 'Delta':
+      lowcut = 1
+      highcut = 4
+    elif selected_frequency == 'Theta':
+      lowcut = 4
+      highcut = 8
+    elif selected_frequency == 'Gamma':
+      lowcut = 30
+      highcut = 100
+    elif selected_frequency == 'None':
+      lowcut = 1
+      highcut = 100
+    sampled_channel = butter_bandpass_filter(signals.iloc[id].to_numpy(), lowcut, highcut, 256, order=6)
+    if session_name:
+      st.write("Showing the first five channels of the selected file -", session_name)
+      st.dataframe(signals.head())
+    if show_topo:
+      st.write("Showing the topographical data of the brain as per Emotiv 14 channel headset")
+      st.pyplot(fig)
+    if selected_channel:
+      st.write("The data of the selected channel ",selected_channel," in the band frequency -  ",selected_frequency)
+      st.line_chart(sampled_channel)
+  # st.markdown('The data for our project has been used from - [EEG dataset of Fusion relaxation and concentration moods”, Mendeley Data, V1, doi: 10.17632/8c26dn6c7w.1](https://data.mendeley.com/datasets/8c26dn6c7w/1#__sid=js0)')
  
 
 
